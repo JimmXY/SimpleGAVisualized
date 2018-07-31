@@ -1,0 +1,1209 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Genetic Algorithm Homework</title>
+    <script type='text/javascript' src='scripts/linq.min.js'></script>
+    <script type='text/javascript' src='scripts/knockout-3.2.0.js'></script>    
+    <script src="scripts/jquery.min.js"></script>
+    <script src="scripts/highcharts.js"></script>
+    <script src="scripts/highcharts-3d.js"></script>
+    <script src="scripts/exporting.js"></script>
+
+    <style>
+        .chromosome {
+            width: 49%;
+            display: inline-block;
+            margin: 5px 0.25%;
+            font-size: smaller;
+            z-index: 900;
+        }
+
+            .chromosome .index {
+                background-color: #323537;
+                color: #EEE;
+                width: 1.5em;
+                text-align: center;
+                padding: 1px;
+                border-radius: 0.25em;
+                height: 100%;
+                display: inline-block;
+                z-index: 900;
+            }
+
+            .chromosome .gene-sequence {
+                margin: 0px 2px 0px 2px;
+                display: inline-block;
+            }
+
+                .chromosome .gene-sequence.viable {
+                    border-left: 4px solid green;
+                }
+
+                .chromosome .gene-sequence.non-viable {
+                    border-left: 4px solid red;
+                }
+
+                .chromosome .gene-sequence.undecided {
+                    border-left: 4px solid yellow;
+                }
+
+                .chromosome .gene-sequence .gene {
+                    display: inline-block;
+                    background-color: #DDD;
+                    width: 0.95em;
+                    padding: 2px;
+                    margin: 0px -2px;
+                    text-align: center;
+                }
+
+                    .chromosome .gene-sequence .gene .value {
+                        font-weight: bold;
+                    }
+
+                    .chromosome .gene-sequence .gene.correct {
+                        border-bottom: 4px solid #0c6918;
+                    }
+
+                    .chromosome .gene-sequence .gene.wrong {
+                        border-bottom: 4px solid #ff0000;
+                        opacity: 0.3;
+                    }
+
+                    .chromosome .gene-sequence .gene.cross-over-point {
+                        border-left: 4px solid #000;
+                        opacity: 0.8;
+                    }
+
+            .chromosome .fitness {
+                display: inline-block;
+                background-color: #9db5c4;
+                color: #2b2828;
+                width: 3em;
+                padding: 1px;
+                border-radius: 0.25em;
+                height: 100%;
+                text-align: center;
+                z-index: 900;
+            }
+    </style>
+    <style>
+        html, body {
+            margin: 0px;
+            height: 100%;
+            width: 100%;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        #config-panel {
+            width: 100%;
+            margin: 4px;
+            padding: 8px;
+        }
+
+            #config-panel table {
+                width: 100%;
+            }
+
+            #config-panel thead tr td {
+                text-align: center;
+                font-weight: bold;
+                border-bottom: 2px solid #333;
+                background-color: #4197d7;
+                color: #fff;
+            }
+
+            #config-panel table tbody {
+                background-color: #eee;
+            }
+
+            #config-panel table tr td {
+                padding: 4px 6px;
+            }
+
+            #config-panel .config-row .config-label, #config-panel .config-row .config-field {
+                display: inline-block;
+                margin: 0px 4px;
+            }
+
+            #config-panel table tbody tr td.info {
+                font-size: small;
+                font-style: italic;
+            }
+
+            #config-panel table tbody tr.inactive {
+                background-color: #aaa;
+                display: none;
+            }
+
+            #config-panel table tbody tr.active {
+                background-color: #ddd;
+                display: table-row;
+            }
+
+            #config-panel table tr.last-row td {
+                border-top: 2px solid #333;
+                text-align: center;
+                padding: 8px 12px;
+            }
+
+        .splitter {
+            width: 49%;
+            margin: 0px 0.25%;
+            padding: 0px;
+            display: inline-block;
+            height: 100%;
+            float: left;
+        }
+
+        .panel {
+            margin: 4px;
+            padding: 8px;
+            width: 100%;
+        }
+
+            .panel .title {
+                width: 100%;
+                text-align: center;
+                font-weight: bold;
+                border-bottom: 2px solid #333;
+                background-color: #4197d7;
+                color: #fff;
+                padding: 4px 0px;
+            }
+
+        .info-area, .info-item {
+            display: inline-block;
+        }
+
+        .info-area {
+            width: 100%;
+            background-color: #eee;
+        }
+
+        .info-item {
+            text-align: center;
+            margin: 6px 3px;
+            border: 1px solid #666;
+            border-radius: 6px;
+            float: right;
+        }
+
+            .info-item.medium {
+                width: 7em;
+            }
+
+            .info-item.long {
+                width: 10em;
+            }
+
+        .info-label {
+            padding: 4px;
+            font-size: 0.70em;
+            font-style: italic;
+            letter-spacing: 2px;
+            font-weight: 100;
+            background-color: #333;
+            color: #eee;
+        }
+
+        .info-value {
+            font-size: 1.25em;
+            border-bottom: 1px solid #333;
+            padding: 2px;
+            background-color: #5b5656;
+            color: #FFF;
+        }
+
+        .blink-box {
+            width: 0.5em;
+            height: 0.80em;
+            background-color: #808080;
+            border-radius: 0.5em;
+            display: inline-block;
+        }
+
+            .blink-box.active {
+                background-color: #4cff00;
+                opacity: 1;
+            }
+
+            .blink-box.inactive {
+                background-color: #ffd800;
+                opacity: 0.25;
+            }
+    </style>
+
+    <style>
+        #graphs-qos-container, #graph-qos {
+        }
+
+        #graphs-qos-container, #graphs-map-container {
+            width: 100%;
+            height: 44%;
+        }
+
+        #graph-qos, #graph-map {
+            width: 98%;
+            height: 90%;
+            padding: 8px;
+            background-color: #333;
+        }
+
+        .maximize, .restore {
+            display: inline-block;
+            float: right;
+            margin: 0em 1em;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="splitter left">
+        <div id="config-panel">
+            <table>
+                <thead>
+                    <tr>
+                        <td colspan="4">Genetic Algorithm Configuration Panel</td>
+                    </tr>
+                </thead>
+                <tbody data-bind="visible: !Locked() ">
+                    <tr>
+                        <td colspan="2">Target String</td>
+                        <td><input type="text" data-bind="value: TargetString" /></td>
+                        <td class="info">The final string that the algorithm is searching for</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Fitness function</td>
+                        <td>
+                            <select data-bind="value: FitnessType">
+                                <option value="1">Squared distance</option>
+                                <option value="2">Binary distance</option>
+                            </select>
+                        </td>
+                        <td class="info">The fitness function to be used for ranking the chromosomes</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Has mutations?</td>
+                        <td>
+                            <input type="checkbox" data-bind="checked: HasMutations" />
+                        </td>
+                        <td class="info">Check if mutations are allowed</td>
+                    </tr>
+                    <tr data-bind="css: (HasMutations() ? 'active': 'inactive')">
+                        <td></td>
+                        <td>Mutation rate</td>
+                        <td>
+                            <input type="number" data-bind="value: MutationRate" />
+                        </td>
+                        <td class="info">The mutation rate used. {0, 1}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Cross-over type</td>
+                        <td>
+                            <select data-bind="value: CrossoverType">
+                                <option value="1">Fixed point cross-over</option>
+                                <option value="2">Range cross-over</option>
+                            </select>
+                        </td>
+                        <td class="info">The cross over type to be used while mating</td>
+                    </tr>
+                    <tr data-bind="css: (CrossoverType() == 1 ? 'active': 'inactive')">
+                        <td></td>
+                        <td>Cross-over point</td>
+                        <td>
+                            <select data-bind="options: AvailableCrossoverPoints,
+                                       value: CrossoverPoint"></select>
+                        </td>
+                        <td class="info">The fixed point at which cross-over occurs</td>
+                    </tr>
+                    <tr data-bind="css: (CrossoverType() == 2 ? 'active': 'inactive')">
+                        <td></td>
+                        <td>Cross-over point range</td>
+                        <td>
+                            <span>Between</span>
+                            <select data-bind="options: AvailableCrossoverStartPoints, value: CrossoverRangeStart"></select>
+                            <span>and</span>
+                            <select data-bind="options: AvailableCrossoverEndPoints, value: CrossoverRangeEnd"></select>
+                        </td>
+                        <td class="info">The range of points at which cross-over can occur</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Starting population size</td>
+                        <td><input type="number" data-bind="value: StartingPopulationSize" /></td>
+                        <td class="info">The number of chromosomes in the starting population</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Running population size</td>
+                        <td><input type="number" data-bind="value: RunningPopulationSize" /></td>
+                        <td class="info">The number of chromosomes in the running population</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Limit by generation?</td>
+                        <td>
+                            <input type="checkbox" data-bind="checked: LimitedByGenerations" />
+                        </td>
+                        <td class="info">Should the algorithm terminate after a certain number of generations</td>
+                    </tr>
+                    <tr data-bind="css: (LimitedByGenerations() ? 'active': 'inactive')">
+                        <td></td>
+                        <td>Generation limit</td>
+                        <td><input type="number" data-bind="value: GenerationLimit" /></td>
+                        <td class="info">The maximum number of generations before termination</td>
+                    </tr>
+                </tbody>
+                <tr>
+                    <td colspan="3">
+                        <span>Target string - </span><span style="font-weight:bold" data-bind="text: TargetString"></span>
+                    </td>
+                    <td style="text-align: right" data-bind="visible: Locked()">
+                        <button data-bind="click: Release"> Release</button>
+                    </td>
+                </tr>
+                <tr class="last-row" data-bind="visible: !Locked()">
+                    <td colspan="4">
+                        <button data-bind="click: Start">Start</button>
+                        <button>Reset</button>
+                        <button>Clear</button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="panel" id="solution-quality-panel">
+            <div class="title">Visualization: Quality of Solutions</div>
+            <div class="info-area">
+                <div class="info-item long">
+                    <div class="info-value">
+                        <span class="blink-box" data-bind="css: (CurrentStatus() == 0 ? 'active': 'inactive')"></span>
+                        <span class="blink-box" data-bind="css: (CurrentStatus() == 1 ? 'active': 'inactive')"></span>
+                        <span class="blink-box" data-bind="css: (CurrentStatus() == 2 ? 'active': 'inactive')"></span>
+                        <span class="blink-box" data-bind="css: (CurrentStatus() == 3 ? 'active': 'inactive')"></span>
+                        <span class="blink-box" data-bind="css: (CurrentStatus() == 4 ? 'active': 'inactive')"></span>
+                        <span class="blink-box" data-bind="css: (CurrentStatus() == 5 ? 'active': 'inactive')"></span>
+                        <span class="blink-box" data-bind="css: (CurrentStatus() == 6 ? 'active': 'inactive')"></span>
+                        <span class="blink-box" data-bind="css: (CurrentStatus() == 7 ? 'active': 'inactive')"></span>
+                        <span class="blink-box" data-bind="css: (CurrentStatus() == 8 ? 'active': 'inactive')"></span>
+                        <span class="blink-box" data-bind="css: (CurrentStatus() == 9 ? 'active': 'inactive')"></span>
+                    </div>
+                    <div class="info-label" data-bind="text: CurrentStatusText">Current Activity</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value" data-bind="text: MutationsCount"></div>
+                    <div class="info-label">Mutations</div>
+                </div>
+
+                <div class="info-item medium">
+                    <div class="info-value " data-bind="text: MeanFitness"></div>
+                    <div class="info-label">Mean fitness</div>
+                </div>
+                <div class="info-item medium">
+                    <div class="info-value" data-bind="text: WorstFitness"></div>
+                    <div class="info-label">Worst fitness</div>
+                </div>
+                <div class="info-item medium">
+                    <div class="info-value" data-bind="text: BestFitness"></div>
+                    <div class="info-label">Best fitness</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-value" data-bind="text: CurrentGeneration"></div>
+                    <div class="info-label">Generation</div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="panel" id="algorithm-operations-panel">
+            <div class="title">Visualization: Chromosomes [Algorithm Operations]</div>
+            <div>
+                <!-- ko foreach: Population -->
+                <div class="chromosome">
+                    <div class="index" data-bind="text: $index() + 1"></div>
+                    <div class="gene-sequence" data-bind="css: (ViabilityStatus() ==0 ? 'undecided' : (ViabilityStatus() == -1? 'non-viable' : 'viable'))">
+                        <!-- ko foreach: Genes -->
+                        <div class="gene" data-bind="css: { 'correct' : IsCorrect() , 'wrong': !IsCorrect(), 'cross-over-point': IsCrossoverPoint()}">
+                            <span class="value" data-bind="text: String.fromCharCode(Value())"></span>
+                        </div>
+                        <!-- /ko -->
+                        <div class="fitness" data-bind="text: Fitness"></div>
+                    </div>
+
+
+                </div>
+
+                <!-- /ko -->
+
+            </div>
+        </div>
+    </div>
+
+    <div class="splitter right">
+        <div class="panel" id="graphs-qos-container">
+            <div class="title">
+                Visualization: Quality of Solutions Graphs
+                <!--<div class="maximize">Maximize</div>
+                <div class="restore">Restore</div>-->
+            </div>
+            <div id="graph-qos">
+
+            </div>
+        </div>
+
+        <div class="panel" id="graphs-map-container">
+            <div class="title">Visualization: 3D Fitness Graph</div>
+            <div id="graph-map">
+
+            </div>
+        </div>
+
+    </div>
+
+    <script defer>
+
+    </script>
+
+    <script>
+        var testSample1 = [[83, 69, 103, 87, 106, 71, 81, 108, 89, 76, 71, 92, 115, 77, 109, 120, 99], [85, 105, 96, 109, 81, 86, 119, 120, 79, 118, 67, 89, 92, 105, 99, 89, 98],
+                           [117, 88, 96, 76, 71, 103, 68, 92, 112, 94, 115, 84, 89, 88, 114, 115, 93], [75, 120, 94, 116, 97, 84, 70, 68, 86, 79, 107, 74, 110, 76, 122, 92, 109],
+                           [75, 122, 66, 80, 110, 86, 114, 78, 100, 79, 106, 105, 70, 68, 75, 83, 71], [110, 97, 121, 106, 106, 108, 105, 86, 115, 121, 122, 90, 76, 109, 99, 105, 98],
+                           [81, 96, 83, 107, 107, 79, 110, 65, 114, 106, 106, 112, 113, 112, 87, 111, 117], [102, 73, 92, 122, 114, 98, 110, 101, 108, 88, 118, 66, 75, 106, 112, 75, 84],
+                           [80, 111, 111, 80, 89, 79, 121, 112, 105, 88, 101, 82, 117, 82, 67, 91, 65], [70, 78, 87, 108, 119, 84, 73, 106, 112, 110, 89, 112, 92, 68, 115, 101, 113],
+                           [82, 83, 117, 117, 118, 79, 116, 73, 79, 66, 119, 110, 110, 67, 87, 116, 122], [109, 73, 100, 119, 120, 95, 75, 119, 95, 79, 81, 89, 78, 99, 84, 95, 82],
+                           [81, 87, 67, 115, 88, 74, 96, 81, 80, 120, 122, 107, 119, 83, 121, 90, 119], [80, 85, 94, 106, 107, 67, 95, 88, 68, 96, 118, 92, 76, 65, 110, 117, 92],
+                           [96, 68, 116, 75, 69, 88, 99, 72, 82, 108, 118, 79, 84, 106, 110, 117, 70], [102, 76, 112, 105, 83, 75, 81, 93, 81, 69, 82, 99, 106, 72, 84, 76, 100],
+                           [93, 87, 122, 87, 97, 93, 74, 114, 99, 94, 95, 68, 74, 108, 117, 67, 80], [88, 114, 102, 114, 98, 81, 114, 80, 120, 89, 81, 83, 99, 79, 74, 116, 71],
+                           [110, 109, 113, 99, 92, 98, 105, 68, 86, 87, 79, 72, 78, 88, 78, 105, 83], [89, 109, 71, 73, 91, 88, 96, 79, 119, 120, 107, 98, 74, 91, 99, 97, 71],
+                           [100, 114, 100, 76, 87, 67, 95, 101, 110, 89, 113, 120, 87, 92, 115, 90, 113], [71, 77, 85, 67, 115, 105, 114, 95, 80, 107, 95, 119, 71, 86, 102, 70, 78],
+                           [107, 113, 75, 101, 107, 121, 105, 107, 100, 66, 79, 80, 103, 67, 92, 106, 115], [112, 66, 103, 94, 108, 74, 91, 79, 97, 73, 80, 122, 87, 71, 119, 75, 119],
+                           [65, 99, 69, 81, 99, 68, 121, 84, 95, 71, 103, 98, 84, 119, 118, 99, 70], [95, 80, 114, 71, 102, 74, 66, 87, 103, 74, 84, 108, 105, 96, 103, 102, 100],
+                           [98, 109, 92, 117, 88, 88, 66, 122, 116, 114, 94, 76, 65, 96, 116, 78, 120], [69, 122, 105, 77, 114, 80, 98, 86, 121, 108, 76, 115, 105, 110, 118, 77, 105],
+                           [84, 90, 65, 73, 92, 84, 78, 77, 72, 109, 94, 110, 119, 65, 94, 107, 98], [71, 101, 100, 112, 107, 81, 94, 104, 70, 83, 114, 112, 84, 121, 73, 104, 94],
+                           [93, 71, 122, 98, 83, 103, 105, 98, 107, 115, 85, 72, 88, 93, 107, 88, 107], [94, 121, 115, 75, 84, 120, 78, 106, 87, 84, 73, 83, 114, 90, 122, 67, 111]];
+
+        var testSample2 = [[83, 69, 97, 110, 100, 72, 101, 117, 114, 105, 115, 116, 105, 99, 95, 65, 73], [85, 105, 96, 109, 81, 86, 119, 120, 79, 118, 67, 89, 92, 105, 99, 89, 98],
+                           [117, 88, 96, 76, 71, 103, 68, 92, 112, 94, 115, 84, 89, 88, 114, 115, 93], [75, 120, 94, 116, 97, 84, 70, 68, 86, 79, 107, 74, 110, 76, 122, 92, 109],
+                           [75, 122, 66, 80, 110, 86, 114, 78, 100, 79, 106, 105, 70, 68, 75, 83, 71], [110, 97, 121, 106, 106, 108, 105, 86, 115, 121, 122, 90, 76, 109, 99, 105, 98],
+                           [81, 96, 83, 107, 107, 79, 110, 65, 114, 106, 106, 112, 113, 112, 87, 111, 117], [102, 73, 92, 122, 114, 98, 110, 101, 108, 88, 118, 66, 75, 106, 112, 75, 84],
+                           [80, 111, 111, 80, 89, 79, 121, 112, 105, 88, 101, 82, 117, 82, 67, 91, 65], [70, 78, 87, 108, 119, 84, 73, 106, 112, 110, 89, 112, 92, 68, 115, 101, 113],
+                           [82, 83, 117, 117, 118, 79, 116, 73, 79, 66, 119, 110, 110, 67, 87, 116, 122], [109, 73, 100, 119, 120, 95, 75, 119, 95, 79, 81, 89, 78, 99, 84, 95, 82],
+                           [81, 87, 67, 115, 88, 74, 96, 81, 80, 120, 122, 107, 119, 83, 121, 90, 119], [80, 85, 94, 106, 107, 67, 95, 88, 68, 96, 118, 92, 76, 65, 110, 117, 92],
+                           [96, 68, 116, 75, 69, 88, 99, 72, 82, 108, 118, 79, 84, 106, 110, 117, 70], [102, 76, 112, 105, 83, 75, 81, 93, 81, 69, 82, 99, 106, 72, 84, 76, 100],
+                           [93, 87, 122, 87, 97, 93, 74, 114, 99, 94, 95, 68, 74, 108, 117, 67, 80], [88, 114, 102, 114, 98, 81, 114, 80, 120, 89, 81, 83, 99, 79, 74, 116, 71],
+                           [110, 109, 113, 99, 92, 98, 105, 68, 86, 87, 79, 72, 78, 88, 78, 105, 83], [89, 109, 71, 73, 91, 88, 96, 79, 119, 120, 107, 98, 74, 91, 99, 97, 71],
+                           [100, 114, 100, 76, 87, 67, 95, 101, 110, 89, 113, 120, 87, 92, 115, 90, 113], [71, 77, 85, 67, 115, 105, 114, 95, 80, 107, 95, 119, 71, 86, 102, 70, 78],
+                           [107, 113, 75, 101, 107, 121, 105, 107, 100, 66, 79, 80, 103, 67, 92, 106, 115], [112, 66, 103, 94, 108, 74, 91, 79, 97, 73, 80, 122, 87, 71, 119, 75, 119],
+                           [65, 99, 69, 81, 99, 68, 121, 84, 95, 71, 103, 98, 84, 119, 118, 99, 70], [95, 80, 114, 71, 102, 74, 66, 87, 103, 74, 84, 108, 105, 96, 103, 102, 100],
+                           [98, 109, 92, 117, 88, 88, 66, 122, 116, 114, 94, 76, 65, 96, 116, 78, 120], [69, 122, 105, 77, 114, 80, 98, 86, 121, 108, 76, 115, 105, 110, 118, 77, 105],
+                           [84, 90, 65, 73, 92, 84, 78, 77, 72, 109, 94, 110, 119, 65, 94, 107, 98], [71, 101, 100, 112, 107, 81, 94, 104, 70, 83, 114, 112, 84, 121, 73, 104, 94],
+                           [93, 71, 122, 98, 83, 103, 105, 98, 107, 115, 85, 72, 88, 93, 107, 88, 107], [94, 121, 115, 75, 84, 120, 78, 106, 87, 84, 73, 83, 114, 90, 122, 67, 111]];
+    </script>
+
+    <script defer>
+        function ConfigurationViewModel() {
+            var self = this;
+            this.Locked = ko.observable(false);
+
+            this.TargetString = ko.observable("SomeString");
+            this.TargetAlleles = null;
+            this.NumberOfGenesPerChromosome = 0;
+
+            this.FitnessType = ko.observable(1);
+
+            this.HasMutations = ko.observable(false);
+            this.MutationRate = ko.observable(0.1);
+
+
+            this.CrossoverType = ko.observable(1);
+
+            this.AvailableCrossoverPoints = ko.observableArray();
+            this.CrossoverPoint = ko.observable(0);
+
+            this.AvailableCrossoverStartPoints = ko.observableArray();
+            this.AvailableCrossoverEndPoints = ko.observableArray();
+            this.CrossoverRangeStart = ko.observable();
+            this.CrossoverRangeEnd = ko.observable();
+            this.MidRangeCrossover = function (range) {
+                var rangeHalf = Math.floor(range / 2);
+                var startFrom = Math.ceil(self.NumberOfGenesPerChromosome / 2);
+                console.log(rangeHalf, range);
+
+                self.CrossoverRangeStart(startFrom - rangeHalf);
+                self.CrossoverRangeEnd(self.CrossoverRangeStart() + range);
+            }
+
+            this.CrossoverFn = null;
+            self.CrossoverType.subscribe(function (s) {
+                // set the cross over fn accordingly
+                if (s == 1) {
+                    self.CrossoverFn = function () {
+                        return self.CrossoverPoint();
+                    };
+                } else {
+                    var possibleValues = Enumerable.Range(self.CrossoverRangeStart(), self.CrossoverRangeEnd() - self.CrossoverRangeStart()).ToArray();
+                    self.CrossoverFn = function () {
+                        var i = Math.floor(Math.random() * possibleValues.length);
+                        return possibleValues[i];
+                    };
+                }
+            });
+
+            this.StartingPopulationSize = ko.observable(0);
+            this.RunningPopulationSize = ko.observable(0);
+            this.GenerationSelectionSize = 0;
+
+            this.LimitedByGenerations = ko.observable(false);
+            this.GenerationLimit = ko.observable(10000);
+
+            this.Alleles = null;
+
+            var onStartCallback = null;
+            this.Attach = function (startCallback) {
+                onStartCallback = startCallback;
+            }
+
+            this.Start = function () {
+                self.Locked(true);
+                if (onStartCallback != null) onStartCallback();
+            }
+
+            this.Release = function () {
+                self.Locked(false);
+            }
+
+            this.Alleles = Enumerable.Range(65, (122 - 65 + 1)).ToArray(); // alleles are currently fixed
+
+            function recalculate() {
+                // calcuate the target alleles
+                self.TargetAlleles = Enumerable.From(self.TargetString()).Select(function (s) {
+                    return s.charCodeAt();
+                }).ToArray();
+
+                // From the target string -> Length of each chromosome (number of genes)
+                self.NumberOfGenesPerChromosome = self.TargetString().length;
+                // -> single point crossover points
+                self.AvailableCrossoverPoints.splice(0); // clear the array
+                self.AvailableCrossoverStartPoints.splice(0); // clear the array
+                self.AvailableCrossoverEndPoints.splice(0); // clear the array
+                // each available point from 1 to length of target -1
+                for (var i = 1; i < self.NumberOfGenesPerChromosome; i++) {
+                    self.AvailableCrossoverPoints.push(i);
+                    // if range, then the start can be any but the last
+                    self.AvailableCrossoverStartPoints.push(i);
+                    self.AvailableCrossoverEndPoints.push(i);
+                }
+                // removing the last from the start points
+                self.AvailableCrossoverStartPoints.pop();
+            }
+
+            this.TotalAlleles = ko.computed(function () {
+                return self.NumberOfGenesPerChromosome * self.RunningPopulationSize();
+            });
+
+            this.RequiredMutations = ko.computed(function () {
+                return Math.round(self.MutationRate() * self.TotalAlleles());
+            });
+
+            // subscribe to the changes
+            self.RunningPopulationSize.subscribe(function (s) {
+                self.GenerationSelectionSize = Math.ceil(s / 2);
+            });
+
+            self.TargetString.subscribe(recalculate);
+            var lastEndPoint = 0;
+            self.CrossoverRangeStart.subscribe(function (s) {
+                lastEndPoint = self.CrossoverRangeEnd();
+                // start from the start + 1 to length
+                self.AvailableCrossoverEndPoints.splice(0); // clear the array
+                for (var i = (s + 1) ; i < self.NumberOfGenesPerChromosome; i++) {
+                    self.AvailableCrossoverEndPoints.push(i);
+                }
+                // set it back to the last end point if possible
+                if (lastEndPoint >= (s + 1) && lastEndPoint < self.NumberOfGenesPerChromosome) {
+                    self.CrossoverRangeEnd(lastEndPoint);
+                }
+
+            });
+
+
+        }
+
+        function GeneViewModel(value, trueValue) {
+            var self = this;
+
+            this.TrueValue = trueValue;
+            this.Value = ko.observable(value);
+            this.IsCrossoverPoint = ko.observable(false);
+            this.IsCorrect = ko.observable(false);
+
+            // constructor check
+            checkCorrectness();
+
+            self.Value.subscribe(function (s) {
+                checkCorrectness();
+            });
+
+            this.Clone = function () {
+                var n = new GeneViewModel(self.Value(), self.TrueValue);
+                return n;
+            }
+
+            function checkCorrectness() {
+                self.IsCorrect(self.Value() == self.TrueValue);
+            }
+
+
+        }
+
+        function ChromosomeViewModel(config) {
+            var self = this;
+            var C = config;
+            var fitnessFunction = (C.FitnessType() == 1 ? squaredFitnessFunction : binaryFitnessFunction);
+
+            var geneLength = config.TargetString().length;
+            this.Genes = ko.observableArray();
+            this.Fitness = ko.observable(0);
+            this.ViabilityStatus = ko.observable(0); // 0 - not computed, 1 - Viable, -1 - Killed soon
+            this.CrossoverPosition = ko.observable();
+            this.IsParentStart = ko.observable(true);
+
+            // functions
+            this.CalculateFitness = function () {
+                self.Fitness(fitnessFunction());
+            }
+
+
+            self.CrossoverPosition.subscribe(function (s) {
+                // set the value for the appropriate gene
+                self.Genes()[s].IsCrossoverPoint(true);
+            });
+
+            self.ResetCrossoverPoint = function () {
+                self.Genes()[self.CrossoverPosition()].IsCrossoverPoint(false);
+            }
+
+            this.FromSample = function (sample, index) {
+                self.Genes.splice(0);
+                var currentSampleChromosome = sample[index];
+                for (var i = 0; i < C.NumberOfGenesPerChromosome; i++) {
+                    self.Genes.push(new GeneViewModel(currentSampleChromosome[i], C.TargetAlleles[i]));
+                }
+
+            }
+
+            this.GetRandomAllele = function () {
+                var rnd = Math.floor(Math.random() * C.Alleles.length);
+                return C.Alleles[rnd];
+            }
+
+            this.FillRandomGenes = function () {
+                self.Genes.splice(0);
+                for (var i = 0; i < C.NumberOfGenesPerChromosome; i++) {
+                    // pick a random allele
+                    var ng = new GeneViewModel(self.GetRandomAllele(), C.TargetAlleles[i]);
+                    self.Genes.push(ng);
+                }
+            }
+
+            this.Left = new Array();
+            this.Right = new Array();
+
+            this.Split = function () { // split at the cross-over point
+                self.Left.splice(0); self.Right.splice(0); // clear the splices
+                for (var i = 0; i < self.CrossoverPosition() ; i++) {
+                    self.Left.push(self.Genes()[i]);
+                }
+                for (var i = self.CrossoverPosition() ; i < self.Genes().length ; i++) {
+                    self.Right.push(self.Genes()[i]);
+                }
+
+            }
+
+            // hidden fitness functions
+            function squaredFitnessFunction() {
+                var fitness = Enumerable.From(self.Genes()).Select(function (s, index) { return Math.pow((s.Value() - C.TargetAlleles[index]), 2); }).Sum();
+                return fitness;
+            }
+
+            function binaryFitnessFunction() {
+                var fitness = Enumerable.From(self.Genes()).Select(function (s, index) { return s.Value() == C.TargetAlleles[index] ? 0 : 1 }).Sum();
+                return fitness;
+            }
+
+
+        }
+
+        function StatisticsViewModel() {
+            var self = this;
+
+            this.CurrentGeneration = ko.observable(0);
+            this.BestFitness = ko.observable(0);
+            this.WorstFitness = ko.observable(0);
+
+            this.MeanFitness = ko.observable(0);
+            this.MutationsCount = ko.observable(0);
+            // 0 - not started, 1 - Initializing, 2-Calculating fitness, 3-Ordering by fitness, 4-Selecting parents,5-Pruning population, 6-Crossing, 7-Mutating, 8-test for termination, 9-done
+            this.CurrentStatus = ko.observable(0);
+
+            var statusArray = ["Not started", "Creating starting population", "Calculating fitness",
+                "Ordering by fitness", "Testing for termination", "Selecting parents", "Killing non-viables", "Crossing/Mating", "Mutating", "Completed"];
+            this.CurrentStatusText = ko.computed(function () {
+                return statusArray[self.CurrentStatus()];
+            });
+        }
+
+        function Sequencer(startingWith) {
+            var self = this;
+            var startWith = startingWith;
+            var interval = 0;
+            var doneCallback = null;
+            this.Begin = function () {
+                // execute the start
+                setTimeout(executeNext, interval, startingWith);
+            }
+
+            function executeNext(current) {
+                var next = current();
+                if (next != null) {
+                    setTimeout(executeNext, interval, next);
+                } else {
+                    self.Done();
+                }
+            }
+
+            this.Done = function () {
+                console.log('Execution done..');
+            }
+
+        }
+
+        function EngineViewModel(config) {
+            var self = this;
+            var C = config;
+            this.Population = ko.observableArray();
+            var stat = new StatisticsViewModel();
+            this.Statistics = ko.observable(stat);
+            this.IsProcessing = ko.observable(false);
+            this.IsRunning = ko.observable(false);
+            this.IsReady = ko.observable(false);
+            var qChart;
+            var mChart;
+
+            this.IsQGraphMaximized = ko.observable(false);
+            this.IsMGraphMaximed = ko.observable(false);
+            
+            this.MaximizeQ = function () {
+                self.IsQGraphMaximized(true);
+            }
+            this.RestoreQ = function () {
+                self.IsQGraphMaximized(false);
+            }
+
+            this.MaximizeM = function () {
+                self.IsQGraphMaximized(true);
+            }
+            this.RestoreM = function () {
+                self.IsQGraphMaximized(false);
+            }
+            var sequencer = null;
+            var generationCounter = 0;
+            var autoFocusOn = 20;
+            var lastExtremes = { min: 0, max: autoFocusOn };
+            var overallMaxFitness = -1;
+
+            this.Initialize = function () { // initializes and begins the sequencer
+                console.log("Initializing..");
+                sequencer = new Sequencer(self.GenerateStartingPopulation);
+
+                sequencer.Begin();
+
+            }
+            function SetCurrentStatus(value) {
+                self.Statistics().CurrentStatus(value);
+            }
+
+            this.GenerateStartingPopulation = function () {// generate the starting population
+                generationCounter = 0;
+                self.IsReady(false);
+                self.IsRunning(true);
+                self.IsProcessing(false);
+                stat = new StatisticsViewModel();
+                self.Statistics(stat) // reset statistics
+                self.Population.splice(0);
+                SetCurrentStatus(1);
+                // to generate the starting population, create that many chromosomes and fill them randomly
+                for (var i = 0; i < C.StartingPopulationSize() ; i++) {
+                    var nc = new ChromosomeViewModel(C);
+                    nc.FillRandomGenes();
+                    //nc.FromSample(testSample1, i);
+                    self.Population.push(nc);
+                }
+
+                // print to save
+                var storeString = "[" + Enumerable.From(self.Population()).Select(function (s) {
+                    return "[" + Enumerable.From(s.Genes()).Select(function (a) {
+                        return a.Value();
+                    }).Aggregate(function (a0, a1) {
+                        return a0 + "," + a1;
+                    }) + "]";
+                }).Aggregate(function (a0, a1) {
+                    return a0 + "," + a1;
+                }) + "]";
+                //console.log(storeString.replace(/["']/g, ""));
+                return self.CalculateFitness;
+            }
+
+            this.CalculateFitness = function () { // calcuate the fitness of the population
+                SetCurrentStatus(2);
+                // move to next generation
+                self.Statistics().CurrentGeneration(++generationCounter);
+                // calcuate the fitness on each chromosome
+                for (var i = 0; i < self.Population().length; i++) {
+                    self.Population()[i].CalculateFitness();
+                }
+                return self.OrderByFitness;
+            }
+
+            this.OrderByFitness = function () { // order the current population b fitness
+                SetCurrentStatus(3);
+                self.Population.sort(function (a0, a1) {
+                    return a0.Fitness() - a1.Fitness();
+                });
+
+                return self.TestForTermination;
+            }
+
+            this.SelectViables = function () { // select the top N/2 viable parents (fittest)
+                SetCurrentStatus(5);
+                for (var i = 0; i < self.Population().length; i++) {
+                    self.Population()[i].ViabilityStatus(0);
+                }
+
+                // set the viability status
+                for (var i = 0; i < C.GenerationSelectionSize; i++) {
+                    self.Population()[i].ViabilityStatus(1);
+                }
+                for (var i = C.GenerationSelectionSize; i < self.Population().length; i++) {
+                    self.Population()[i].ViabilityStatus(-1);
+                }
+                return self.KillWeaklings;
+            }
+
+            this.KillWeaklings = function () {
+                SetCurrentStatus(6);
+                self.Population.splice(C.GenerationSelectionSize);
+                return self.IdentifyCrossoverPoints;
+            }
+            var currentCrossOverPoint = 0;
+            this.IdentifyCrossoverPoints = function () {
+                SetCurrentStatus(7);
+
+                currentCrossOverPoint = C.CrossoverFn(); // C.CrossoverFn();
+                for (var i = 0; i < self.Population().length; i++) {
+                    self.Population()[i].CrossoverPosition(currentCrossOverPoint);
+                }
+                return self.SplitAtCrossoverPoint;
+            }
+
+            this.SplitAtCrossoverPoint = function () {
+                SetCurrentStatus(7);
+                for (var i = 0; i < self.Population().length; i++) {
+                    self.Population()[i].Split();
+                }
+                return self.MateParents;
+            }
+
+            this.MateParents = function () {
+                SetCurrentStatus(7);
+                var pop = self.Population();
+                // take the paired parents and mate at crossover point
+                for (var i = 0; i < C.GenerationSelectionSize; i = i + 2) {
+                    var parent1 = pop[i];
+                    var parent2 = pop[i + 1];
+                    var child1 = new ChromosomeViewModel(C);
+                    var child2 = new ChromosomeViewModel(C);
+                    for (var j = 0; j < parent1.Left.length ; j++) {
+                        child1.Genes.push(parent1.Left[j].Clone());
+                    }
+                    for (var j = 0; j < parent2.Right.length ; j++) {
+                        child1.Genes.push(parent2.Right[j].Clone());
+                    }
+                    for (var j = 0; j < parent2.Left.length ; j++) {
+                        child2.Genes.push(parent2.Left[j].Clone());
+                    }
+                    for (var j = 0; j < parent1.Right.length ; j++) {
+                        child2.Genes.push(parent1.Right[j].Clone());
+                    }
+                    parent1.ResetCrossoverPoint();
+                    parent2.ResetCrossoverPoint();
+                    //console.log(child1.Genes());
+                    self.Population.push(child1);
+                    self.Population.push(child2);
+                }
+                return self.Mutate;
+            }
+
+            this.Mutate = function () {
+                SetCurrentStatus(8); // set only if mutation is done
+                if (!C.HasMutations()) return self.CalculateFitness;
+                var currentMutationCount = self.Statistics().MutationsCount();
+                var requiredMutations = C.RequiredMutations();
+                var totalAlleles = C.TotalAlleles();
+                for (var i = 0; i < requiredMutations; i++) {
+                    // randomly select an allele from the entire population
+                    var rndIndex = Math.floor(Math.random() * totalAlleles);
+                    var chromsomeIndex = Math.floor(rndIndex / C.NumberOfGenesPerChromosome);
+                    var alleleIndex = rndIndex % C.NumberOfGenesPerChromosome;
+
+                    // randomly select a new allele for the mutated new value
+                    var chromosome = self.Population()[chromsomeIndex];
+                    var newMutatedAllele = chromosome.GetRandomAllele();
+                    // set the allele to new allele
+                    //console.log(chromsomeIndex, alleleIndex, String.fromCharCode(chromosome.Genes()[alleleIndex].Value()), String.fromCharCode(newMutatedAllele));
+                    chromosome.Genes()[alleleIndex].Value(newMutatedAllele);
+                    self.Statistics().MutationsCount(++currentMutationCount);
+                }
+                return self.CalculateFitness;
+            }
+
+            this.TestForTermination = function () {
+                SetCurrentStatus(4);
+                calculateFitnessMeasuresForPopulation();
+                addStatsToChart();
+                // if completed, then terminate
+                // check for the top chromosomes fitness
+                var bestFitness = self.Population()[0].Fitness();
+                // set the termination reason before returning
+                if (bestFitness == 0) return self.Terminate;
+
+                // if required generations done, terminate
+                if (C.LimitedByGenerations() && generationCounter == C.GenerationLimit())
+                    return self.Terminate;
+
+                // terminate if no diversity (all same or threshold same fitness)
+
+                // else continue
+                return self.SelectViables;
+            }
+
+
+            this.Terminate = function () {
+                self.IsReady(false);
+                self.IsRunning(false);
+                self.IsProcessing(true);
+                SetCurrentStatus(9);
+                calculateFitnessMeasuresForPopulation();
+                redrawChart();
+                self.IsReady(true);
+                self.IsRunning(false);
+                self.IsProcessing(false);
+                return null;
+            }
+
+
+            var redrawEvery = 10;
+
+            var qData = [new Array(), new Array(), new Array()];
+            var mData = new Array();
+            function addStatsToChart() {
+                // add max fitness
+                //qosChart.series[0].addPoint(1, true, shift);
+                // update every 10 generations and at the end
+                //qChart.series[0].addPoint(self.Statistics().BestFitness(), false, false); // best
+                //qChart.series[1].addPoint(self.Statistics().WorstFitness(), false, false); // worst
+                //qChart.series[2].addPoint(self.Statistics().MeanFitness(), false, false); // mean
+                if (self.Statistics().CurrentGeneration() % redrawEvery == 0) {
+                    qData[0].push(self.Statistics().BestFitness());
+                    qData[1].push(self.Statistics().WorstFitness());
+                    qData[2].push(self.Statistics().MeanFitness());
+
+                    var pop = self.Population();
+                    var gen = self.Statistics().CurrentGeneration();
+                    var popSize = C.RunningPopulationSize();
+                    for (var i = 0; i < popSize; i++) {
+                        var point = [i + 1, pop[i].Fitness(), gen];
+                        //mChart.series[0].addPoint(point, false, false);
+                        mData.push(point);
+                        //console.log(point);
+                    }
+                }
+                //if (self.Statistics().CurrentGeneration() % redrawEvery == 0) {
+                //    redrawChart();
+                //}
+            }
+
+            var qosChart;
+            var mapChart;
+            function redrawChart() {
+                if (qosChart != null) qosChart.highcharts().destroy();
+                if (mapChart != null) mapChart.destroy();
+
+                qosChart = $('#graph-qos').highcharts({
+                    chart: {
+                        type: 'line'
+                    },
+                    title: {
+                        text: 'Quality of Statistics'
+                    },
+                    xAxis: {
+                        tickInterval: 1,
+                        title: { text: 'Generations' }
+                    },
+                    yAxis: {
+                        min: 0,
+                        title: { text: 'Fitness' }
+                    },
+                    series: [
+                        { name: 'Best fitness', data: qData[0] },
+                        { name: 'Worst fitness', data: qData[1] },
+                        { name: 'Mean fitness', data: qData[2] }]
+                });
+
+                Highcharts.getOptions().colors = $.map(Highcharts.getOptions().colors, function (color) {
+                    return {
+                        radialGradient: {
+                            cx: 0.4,
+                            cy: 0.3,
+                            r: 0.5
+                        },
+                        stops: [
+                            [0, color],
+                            [1, Highcharts.Color(color).brighten(-0.2).get('rgb')]
+                        ]
+                    };
+                });
+
+
+
+                mapChart = new Highcharts.Chart({
+                    chart: {
+                        renderTo: 'graph-map',
+                        type: 'scatter',
+                        margin: 5,
+                        options3d: {
+                            enabled: true,
+                            alpha: 10,
+                            beta: 30,
+                            depth: 200,
+                            viewDistance: 20000,
+                            frame: {
+                                bottom: { size: 1, color: 'rgba(0,0,0,0.02)' },
+                                back: { size: 1, color: 'rgba(0,0,0,0.04)' },
+                                side: { size: 1, color: 'rgba(0,0,0,0.06)' }
+                            }
+                        }
+                    },
+                    title: {
+                        tickInterval: 1,
+                        text: 'Visualization - 3D Fitness'
+                    },
+                    xAxis: {
+                        min: 1,
+                        max: C.RunningPopulationSize(),
+                        tickInterval: 1,
+                        title: { text: 'Ranked Chromosome' }
+                    },
+                    yAxis: {
+                        min: 0,
+                        max: C.FitnessType() == 1 ? overallMaxFitness : 20,
+                        title: { text: 'Fitness' }
+                    },
+                    zAxis: {
+                        min: 0,
+                        max: self.Statistics().CurrentGeneration(),
+                        title: { text: 'Generation' }
+                    },
+                    plotOptions: {
+                        scatter: {
+                            width: 10,
+                            height: 10,
+                            depth: 2
+                        }
+                    },
+                    series: [{
+                        colorByPoint: false,
+                        data: mData
+                    }]
+                });
+                qChart = qosChart.highcharts();
+                mChart = mapChart;
+                var chart = mapChart;
+                $('#graph-map').bind('mousedown.hc touchstart.hc', function (e) {
+                    e = chart.pointer.normalize(e);
+
+                    var posX = e.pageX,
+                        posY = e.pageY,
+                        alpha = chart.options.chart.options3d.alpha,
+                        beta = chart.options.chart.options3d.beta,
+                        newAlpha,
+                        newBeta,
+                        sensitivity = 5; // lower is more sensitive
+
+                    $(document).bind({
+                        'mousemove.hc touchdrag.hc': function (e) {
+                            // Run beta
+                            newBeta = beta + (posX - e.pageX) / sensitivity;
+                            newBeta = Math.min(100, Math.max(-100, newBeta));
+                            chart.options.chart.options3d.beta = newBeta;
+
+                            // Run alpha
+                            newAlpha = alpha + (e.pageY - posY) / sensitivity;
+                            newAlpha = Math.min(100, Math.max(-100, newAlpha));
+                            chart.options.chart.options3d.alpha = newAlpha;
+
+                            chart.redraw(false);
+                        },
+                        'mouseup touchend': function () {
+                            $(document).unbind('.hc');
+                        }
+                    });
+                });
+                qChart.redraw();
+                mChart.redraw();
+            }
+
+            function calculateFitnessMeasuresForPopulation() {
+                var fitnesses = Enumerable.From(self.Population()).Select(function (s) { return s.Fitness() });
+                self.Statistics().BestFitness(fitnesses.Min());
+                self.Statistics().WorstFitness(fitnesses.Max());
+                if (overallMaxFitness < self.Statistics().WorstFitness()) overallMaxFitness = self.Statistics().WorstFitness();
+                self.Statistics().MeanFitness(Math.round(fitnesses.Average() * 100) / 100);
+            }
+
+            // attach to the config
+            C.Attach(self.Initialize);
+
+        }
+
+
+    </script>
+
+
+    <script defer>
+        var configurationVM = new ConfigurationViewModel();
+        // set the default configuration
+        configurationVM.TargetString("SEandHeuristic_AI");
+        configurationVM.FitnessType(1);
+        configurationVM.CrossoverType(1);
+        configurationVM.CrossoverPoint(9);
+        configurationVM.MidRangeCrossover(9);
+        configurationVM.HasMutations(true);
+        configurationVM.MutationRate(0.03);
+        configurationVM.StartingPopulationSize(32);
+        configurationVM.RunningPopulationSize(16);
+        configurationVM.LimitedByGenerations(true);
+        configurationVM.GenerationLimit(5000);
+
+        ko.applyBindings(configurationVM, document.getElementById('config-panel'));
+
+        var engine = new EngineViewModel(configurationVM);
+        ko.applyBindings(engine.Statistics, document.getElementById('solution-quality-panel'));
+        ko.applyBindings(engine, document.getElementById('algorithm-operations-panel'));
+
+        //configurationVM.Start();
+
+    </script>
+</body>
+</html>
